@@ -4,3 +4,6 @@
 
 # testing
 coverage/
+
+.vscode/
+.github/

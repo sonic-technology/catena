@@ -1,5 +1,6 @@
 name: Publish Package to npmjs
 on:
+  workflow_dispatch:
   release:
     types: [published]
 jobs:
@@ -12,7 +13,8 @@ jobs:
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
-      - run: npm ci
-      - run: npm publish --access public
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+      - run: pnpm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

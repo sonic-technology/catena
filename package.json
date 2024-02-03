@@ -1,5 +1,5 @@
 {
-    "name": "catena",
+    "name": "@sonic-tech/catena",
     "version": "0.1.0",
     "type": "module",
     "description": "A lightweight and extensible library for building robust Node.js APIs, fast.",

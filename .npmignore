@@ -1,0 +1,6 @@
+# needs to be explicity allowed as it is ignored by the
+# .gitignore, which is also taken into account by `npm package`
+!dist/
+
+# testing
+coverage/

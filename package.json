@@ -3,10 +3,10 @@
     "version": "0.1.0",
     "type": "module",
     "description": "A lightweight and extensible library for building robust Node.js APIs, fast.",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "scripts": {
-        "build": "rm -rf ./dist && tsc",
+        "build": "rm -rf ./dist tsconfig.tsbuildinfo && tsc",
         "test": "NODE_OPTIONS=--experimental-vm-modules jest"
     },
     "peerDependencies": {

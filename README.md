@@ -1,11 +1,12 @@
 <p align="center">
+  <br/><br/>
   <picture>
-    <source height="115" media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo-dark.svg">
-    <img height="115" alt="Foundry" src="./docs/assets/logo-light.svg">
+    <source height="100" media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo-dark.svg">
+    <img height="100" alt="Foundry" src="./docs/assets/logo-light.svg">
   </picture>
 </p>
 
-<h4 align="center">A collection of tools and functions that can be used in conjunction with LLMs.</h4>
+<h4 align="center">A library for building type-safe Node.js APIs</h4>
 
 <p align="center">
   <a href="#quickstart">Quickstart</a> • 

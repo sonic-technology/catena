@@ -37,7 +37,7 @@ Catena features a handler that is assembled as a chain out of the following elem
 
 # Demo
 
-A quick demo of how Catena works. Find more examples [here](/examples/)
+Short examples of how to use Catena. Find more in-depth examples [here](/examples/)
 
 ## A simple handler
 
@@ -70,23 +70,23 @@ const app = express()
 app.post(
     '/user/:uuid',
     new Handler().
-    .validate("params", {
-        uuid: z.string().uuid()
-    })
-    .validate("body", {
-        username: z.string().optional(),
-        age: z.number().min(13).optional(),
-        email: z.string().email(),
-    })
-    .resolve(async (req, res) => {
-        // All 4 properties are strongly typed based on the zod schemas
-        const { uuid } = req.params
-        const { username, age, email } = req.body
+        .validate("params", {
+            uuid: z.string().uuid()
+        })
+        .validate("body", {
+            username: z.string().optional(),
+            age: z.number().min(13).optional(),
+            email: z.string().email(),
+        })
+        .resolve(async (req, res) => {
+            // All 4 properties are strongly typed based on the zod schemas
+            const { uuid } = req.params
+            const { username, age, email } = req.body
 
-        // ...
+            // ...
 
-        res.status(200).send("User created!")
-    })
+            res.status(200).send("User created!")
+        })
 )
 ```
 
@@ -104,23 +104,22 @@ const app = express()
 app.get(
     '/user/:uuid',
     new Handler().
-    .validate("params", {
-        uuid: z.string().uuid()
-    })
-    .resolve(async (req, res) => {
-        const userIncludingPassword = await UserService.getUser(req.uuid)
+        .validate("params", {
+            uuid: z.string().uuid()
+        })
+        .resolve(async (req, res) => {
+            const userIncludingPassword = await UserService.getUser(req.uuid)
 
-        return userIncludingPassword
-    })
-    .transform((data) => {
-        return {
-            data: {
-                uuid: data.uuid,
-                email: data.email
+            return userIncludingPassword
+        })
+        .transform((data) => {
+            return {
+                data: {
+                    uuid: data.uuid,
+                    email: data.email
+                }
             }
-        }
-    })
-
+        })
 )
 ```
 
@@ -138,41 +137,40 @@ const app = express()
 app.get(
     '/user/:uuid',
     new Handler().
-    .validate("params", {
-        uuid: z.string().uuid()
-    })
-    .validate("headers", {
-        authorization: z.string()
-    })
-    .middleware((req) => {j
-        const requestingUser = await SecurityService.getAuthorizedUser(req.headers.authorization);
-        if (!requestingUser) {
-            // Throw errors when you want to stop further request processing while returning an error at the same time
-            throw new HTTPError(400, 'This should fail')
-        }
-
-        return {
-            requestingUser
-        }
-    })
-    .middleware(AnotherMiddleware)
-    .resolve(async (req, res, context) => {
-        // You can access the merged type-safe context of all middlewares in the resolver
-        const { requestingUser } = context
-
-
-        const userIncludingPassword = await UserService.getUser(req.uuid)
-
-        return userIncludingPassword
-    })
-    .transform((data) => {
-        return {
-            data: {
-                uuid: data.uuid,
-                email: data.email
+        .validate("params", {
+            uuid: z.string().uuid()
+        })
+        .validate("headers", {
+            authorization: z.string()
+        })
+        .middleware((req) => {j
+            const requestingUser = await SecurityService.getAuthorizedUser(req.headers.authorization);
+            if (!requestingUser) {
+                // Throw errors when you want to stop further request processing while returning an error at the same time
+                throw new HTTPError(400, 'This should fail')
             }
-        }
-    })
 
+            return {
+                requestingUser
+            }
+        })
+        .middleware(AnotherMiddleware)
+        .resolve(async (req, res, context) => {
+            // You can access the merged type-safe context of all middlewares in the resolver
+            const { requestingUser } = context
+
+
+            const userIncludingPassword = await UserService.getUser(req.uuid)
+
+            return userIncludingPassword
+        })
+        .transform((data) => {
+            return {
+                data: {
+                    uuid: data.uuid,
+                    email: data.email
+                }
+            }
+        })
 )
 ```

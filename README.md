@@ -1,7 +1,20 @@
-# Catena
+<p align="center">
+  <picture>
+    <source height="115" media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo-dark.svg">
+    <img height="115" alt="Foundry" src="./docs/assets/logo-light.svg">
+  </picture>
+</p>
 
-Catena is a lightweight and extensible library for building robust Node.js APIs, fast.
-Catena's main purpose is to build request handler functions for frameworks like Express in a modern and type-safe way.
+<h4 align="center">A collection of tools and functions that can be used in conjunction with LLMs.</h4>
+
+<p align="center">
+  <a href="#quickstart">Quickstart</a> • 
+  <a href="#examples">Examples</a> 
+</p>
+
+<hr/>
+
+## About
 
 ### Features
 

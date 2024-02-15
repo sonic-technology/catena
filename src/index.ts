@@ -1,5 +1,5 @@
-import express from "express"
-import type { Request as ExpressDefaultRequest, Response, NextFunction } from "express"
+import express from 'express'
+import type { Request as ExpressDefaultRequest, Response, NextFunction } from 'express'
 import {
     baseObjectInputType,
     baseObjectOutputType,
@@ -9,17 +9,17 @@ import {
     ZodObject,
     ZodRawShape,
     ZodTypeAny,
-} from "zod"
-import { HTTPError, HTTPStatus, HTTPStatusText } from "./utils/error.js"
-export { HTTPError, HTTPStatus, HTTPStatusText } from "./utils/error.js"
+} from 'zod'
+import { HTTPError, HTTPStatus, HTTPStatusText } from './utils/error.js'
+export { HTTPError, HTTPStatus, HTTPStatusText } from './utils/error.js'
 
 export type CustomRequest<
     RequestType,
     ReqBody = any,
     ReqQuery = any,
     ReqHeaders = any,
-    ReqParams = any,
-> = Omit<RequestType, "body" | "query" | "headers" | "params"> & {
+    ReqParams = any
+> = Omit<RequestType, 'body' | 'query' | 'headers' | 'params'> & {
     body: ReqBody
     query: ReqQuery
     headers: ReqHeaders
@@ -33,13 +33,13 @@ type Middleware<
     ReqHeaders = any,
     ReqParams = any,
     PrevContext = {},
-    NewContext = {},
+    NewContext = {}
 > = (
     req: CustomRequest<ReqType, ReqBody, ReqQuery, ReqHeaders, ReqParams>,
     res: Response,
     next: NextFunction,
     prevContext: PrevContext
-) => NewContext | Promise<NewContext> | void
+) => NonNullable<NewContext> | Promise<NonNullable<NewContext>> | void | Promise<void>
 
 class ValidationError extends Error {
     public statusCode: number
@@ -47,7 +47,7 @@ class ValidationError extends Error {
     public location: string
 
     constructor(zodError: ZodError, location: string) {
-        super("Validation failed")
+        super('Validation failed')
 
         // HTTP status code for validation errors
         this.statusCode = 400
@@ -61,6 +61,7 @@ class ValidationError extends Error {
         this.location = location
     }
 }
+
 export type HandlerReturnType<TransformedData> = express.RequestHandler & {
     transformedData: TransformedData
 }
@@ -79,7 +80,7 @@ export class Handler<
     ReqHeaders = any,
     ReqParams = any,
     ResolvedData = any,
-    Context = {},
+    Context = {}
 > {
     private _resolver?: (
         req: CustomRequest<RequestType, ReqBody, ReqQuery, ReqHeaders, ReqParams>,
@@ -118,6 +119,10 @@ export class Handler<
         this._chain.push(async (req, res, next, context) => {
             const contextData = (await mw(req, res, next, context as Context)) as Partial<Context>
 
+            if (contextData === undefined || contextData === null) {
+                // return old context if new context is undefined or null
+                return context
+            }
             return contextData
         })
         return this as any
@@ -129,12 +134,12 @@ export class Handler<
      * @param schema the schema to validate against. Can be a zod object or a raw object containing zod types
      */
     validate<
-        T extends "body" | "query" | "headers" | "params",
+        T extends 'body' | 'query' | 'headers' | 'params',
         K extends ZodRawShape,
         // copied from zod/lib/types.d.ts objectType. Adjusted to K instead of T
         U extends ZodObject<
             K,
-            "strip",
+            'strip',
             ZodTypeAny,
             {
                 [k_1 in keyof objectUtil.addQuestionMarks<
@@ -156,17 +161,17 @@ export class Handler<
             {
                 [k_2 in keyof baseObjectInputType<K>]: baseObjectInputType<K>[k_2]
             }
-        >,
+        >
     >(
         type: T,
         schema: K | U
     ): Handler<
         GlobalOutputData,
         RequestType,
-        T extends "body" ? z.infer<U> : ReqBody,
-        T extends "query" ? z.infer<U> : ReqQuery,
-        T extends "headers" ? z.infer<U> : ReqHeaders,
-        T extends "params" ? z.infer<U> : ReqParams
+        T extends 'body' ? z.infer<U> : ReqBody,
+        T extends 'query' ? z.infer<U> : ReqQuery,
+        T extends 'headers' ? z.infer<U> : ReqHeaders,
+        T extends 'params' ? z.infer<U> : ReqParams
     > {
         // validation logic here
         const validationMiddleware = (
@@ -176,14 +181,14 @@ export class Handler<
         ) => {
             try {
                 // if the request body is not an object, don't validate it
-                if (typeof req[type] !== "object") {
-                    throw new HTTPError(400, "Invalid request body (not an object)")
+                if (typeof req[type] !== 'object') {
+                    throw new HTTPError(400, 'Invalid request body (not an object)')
                 }
 
                 const value = req[type]
 
                 function isZodObject(object: K | U): object is U {
-                    return "_def" in object
+                    return '_def' in object
                 }
 
                 // if it's already an zod object, just use it. Else, make it a zod object first
@@ -274,7 +279,7 @@ export class Handler<
                             const transformerValue = await this._transformer(result, res)
                             if (transformerValue !== undefined) {
                                 if (
-                                    typeof transformerValue === "object" &&
+                                    typeof transformerValue === 'object' &&
                                     transformerValue !== null
                                 ) {
                                     res.json(transformerValue)
@@ -305,11 +310,12 @@ export class Handler<
                         },
                         context
                     )
+
                     // only append object values to context
                     if (
                         returnedContextValue !== undefined &&
                         returnedContextValue !== null &&
-                        typeof returnedContextValue === "object" &&
+                        typeof returnedContextValue === 'object' &&
                         !Array.isArray(returnedContextValue)
                     ) {
                         context = { ...context, ...returnedContextValue }
@@ -317,7 +323,6 @@ export class Handler<
 
                     await runNextChainItem()
                 } catch (err) {
-                    // call the native next express error handler
                     if (err instanceof ValidationError) {
                         return res.status(err.statusCode).json({
                             errors: err.errors,
@@ -330,6 +335,7 @@ export class Handler<
                             type: HTTPStatusText[err.status as HTTPStatus],
                         })
                     } else {
+                        // call the native next express error handler
                         next(err)
                         return
                     }

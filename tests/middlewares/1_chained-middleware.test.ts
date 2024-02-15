@@ -20,7 +20,11 @@ const mergedMiddlewareHandler = new Handler()
 
         return {
             name: 'John Doe',
+            age: 12,
         }
+    })
+    .middleware((req) => {
+        // no return value
     })
     .middleware(async (req, res, next, context) => {
         if (req.query.failInMiddlewareTwo === 'yes') {

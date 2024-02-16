@@ -11,7 +11,7 @@
 <p align="center">
   <a href="#installation">Installation</a> • 
   <a href="#examples">Examples</a> •
-  <a href="#documentation">Documentation</a> 
+  <a href="#setting-up-catena--express">Documentation</a> 
 </p>
 
 <hr/>
@@ -23,9 +23,29 @@ The main goal is to have a unified chain of useful steps to safely handle reques
 
 # Installation
 
+1. Install Catena and its peer depencencies
+
 ```
 npm i @sonic-tech/catena zod express
 ```
+
+2. Also make sure that you have Express' types installed
+
+```
+npm i -D @types/express
+```
+
+# Documentation
+
+-   [Examples](#examples)
+-   [Setting up Catena with Express](#setting-up-catena--express)
+-   [Core Concepts](#core-concepts)
+    -   [Chaining](#chaining)
+        -   [Validators](#validators)
+        -   [Middlewares](#middlewares-1)
+        -   [Resolver](#resolver)
+        -   [Transformer](#transformer)
+    -   [Type-sharing across codebases](#type-sharing-across-codebases)
 
 # Examples
 
@@ -94,6 +114,8 @@ app.post(
 If you want to have a secure and unified way of returning data to the client, use transformers.
 Transformers let you create and send JSON DTOs based on the data that the resolver returned.
 
+This is the recommended way of returning data to the client.
+
 ```ts
 // ...
 import { Handler } from '@sonic-tech/catena'
@@ -131,7 +153,7 @@ Catena extends middlewares by establishing a shared context that can be passed f
 
 ```ts
 // ...
-import { Handler, HttpError } from '@sonic-tech/catena'
+import { Handler, HTTPError } from '@sonic-tech/catena'
 import { AnotherMiddleware } from "..."
 
 const app = express()
@@ -181,19 +203,6 @@ app.get(
 )
 ```
 
-# Documentation
-
-Find an in-depth documentation about:
-
--   [Setting up Catena with Express](#setting-up-catena--express)
--   [Core Concepts](#core-concepts)
-    -   [Chaining](#chaining)
-        -   [Validators](#validators)
-        -   [Middlewares](#middlewares-1)
-        -   [Resolver](#resolver)
-        -   [Transformer](#transformer)
-    -   [Type-sharing across codebases](#type-sharing-across-codebases)
-
 ## Setting up Catena + Express
 
 Catena currently supports Express; work is underway to support Next.js.
@@ -203,24 +212,33 @@ To setup Catena with Express make sure to do the following:
 -   Install `express` and `@types/express` using yarn/npm/pnpm/bun
 -   Suffix all Catena handlers with `.express()` (!). This function will transform the Catena chain into an Express request handler. Without appending this method, you're going to get a type-error and the handler will not work.
 
+Also, you have to use the `express.json()` (or body-parser) middleware in order for the validators to work with JSON content.
+
+```ts
+const app = express()
+app.use(express.json())
+```
+
 ## Core Concepts
 
-### Chaining
+## Chaining
 
 Catena features a handler that is assembled as a chain out of the following elements. Only the `resolve` element is required, all other elements are optional.
 
 -   **`validate`**: Chain [zod](https://github.com/colinhacks/zod)-powered validators for `body`, `params`, `query` and `headers` that only allow requests that match the zod schema
--   **`middleware`**: Middlewares can return values into a shared "context", which is type-safe and accessible to all following chain elements. To block further request processing, e.g. because the requesting entity is not authorized, throw `HttpError`
+-   **`middleware`**: Middlewares can return values into a shared "context", which is type-safe and accessible to all following chain elements. To block further request processing, e.g. because the requesting entity is not authorized, throw `HTTPError`
 -   **`resolve`**: The resolver should be used to handle all business logic, like a normal express handler would do. It either returns data that is passed to the transformer or may use the `res` object to send a response without a transformer
 -   **`transform`**: The transformer can be used to generate a DTO that can be send as response body by just returning it
 
 The elements in this chain are processed one after the other. So if a middleware is executed after a validator, you can be sure that the validation has been passed. If there are multiple chained middlewares, you always access the context of all previous middlewares in the following middlewares.
 
-#### Validators
+All Catena chain elements are bundled into one actual Express handler with the `.express()` method at the end of the chain. Internally, we are not calling Express' `next()` until all chain elements have completed or there has been an uncaught error. If there is an uncaught error, that is not `HTTPError`, we are calling `next(err)`. You may then handle errors on router level or append another middleware.
+
+## Validators
 
 Validators are virtual middlewares that validate the given request data using zod. You can create validators for `body`, `params`, `query` and `headers`. Objects validated by validators are type guarded for all following middlewares and the resolver.
 
-##### Method Signature
+### Method Signature
 
 `.validate(type: "body" | "params" | "query" | "headers", zodObject: object | z.object)`
 
@@ -243,7 +261,7 @@ new Handler().validate(
 )
 ```
 
-Using just a object is more readable, while using `z.object` has the advantage of being able to infer the validator type and use it e.g. in services as argument type. Example:
+Using just an object is more readable, while using `z.object` has the advantage of being able to infer the validator type and use it e.g. in services as argument type. Example:
 
 ```ts
 const bodyValidation = z.object({
@@ -257,13 +275,186 @@ const myServiceMethod = (body: z.infer<typeof bodyValidation>) => {
 }
 ```
 
-#### Middlewares
+### Caveats
 
-#### Resolver
+-   For `headers` validations, **always** use lower-case only keys! ~~`Authorization: z.string()`~~ --> `authorization: z.string()`. The reason for this is that Express converts all headers to lower case to comply with the RFC for HTTP requests, which states that header keys are case-insensitive.
 
-#### Transformer
+## Middlewares
 
-### Type-sharing across codebases
+Middlewares are functions that you can connect prior to the resolver in order to add custom logic such as authorization, non-trivial validation, etc. before the resolver is executed.
+
+### Middleware method signature
+
+```ts
+.middleware(req: RequestWithValidations, res: Response, next: NextFunction, context: MiddlewareContext)
+```
+
+-   `req` extends the default express object with the type-safe inference made by the validators on `body`, `params`, `query` and `headers`.
+-   `res` is the default Express `Response` object
+-   `next` is the default Express `NextFunction`
+-   `context` is a simple object that is empty at the beginning of the first middleware in the chain. It can be filled with any values by the middlewares and passed to other middlewares and the resolver, see below
+
+### Catena Middlewares
+
+Catena exposes a more straightforward way to write middlewares, while also supporting all existing middlewares.
+
+#### Context
+
+Instead of overwriting or extending some parts of the `req` object to pass along context, you can just return an object. This object will be merged with the existing `context` object and will be accessible to all following middlewares and the resolver (type-safe, of course).
+
+```ts
+import { Handler, HTTPError } from '@sonic-tech/catena'
+
+new Handler()
+    .validate('params', {
+        uuid: z.string().uuid(),
+    })
+    .middleware(async (req) => {
+        const user = await UserService.getUser(req.params.uuid) // -> { email: "...", uuid: "..." }
+
+        return {
+            user,
+        }
+    })
+    .middleware(async (req, res, next, context) => {
+        // email and uuid can be extracted from the context type-safely
+        const { email, uuid } = context.user
+
+        if (!email.endsWith('@mycompany.com')) {
+            throw new HTTPError(403, 'Company not allowed')
+        }
+
+        const organization = await OrganizationService().getByUser(uuid)
+
+        return {
+            organization,
+        }
+    })
+    .resolve(async (req, res, context) => {
+        /**
+         * The resolver has access to both user and organization
+         * since the context objects have been merged
+         */
+        const { user, organization } = context
+
+        // ...
+    })
+```
+
+A middleware does not need to return anything. If it returns void, the context objects stays as is.
+
+Sending something to the client using `res.send` causes the chain to stop, i.e. the next chain element is not executed.
+
+#### Errors
+
+Instead of using `res.send` to send error messages, you can import `HTTPError` from Catena and use `throw new HTTPError(statusCode, errorMessage)` which will automatically resolve the request using the given status code and a standardized error message. An example can be seen in the code snippet of the last section.
+
+### Existing Middlewares
+
+You can also use any middleware that works with express out of the box using the default `(req, res, next)` syntax.
+
+```ts
+import { MySecondMiddleware } from "../middlewares"
+const MyExistingMiddleware = (req, res, next) => {
+    if(!req.body.continue) {
+        res.status(400).send("Bad Request")
+        return
+    }
+
+    next()
+}
+
+new Handler()
+    .middleware(MyExistingMiddleware)
+    .middleware(MySecondMiddleware)
+    .resolve(...)
+    .transform(...)
+```
+
+## Resolver
+
+The resolver may be used as the core handler of the request, just as you used the handler function before.
+
+### Method Signature
+
+```ts
+.resolve((req: RequestWithValidations, res: Response, context: MiddlewareContext) => any | Promise<any>)
+```
+
+-   The `req` is the default Express request object, except that `req.body`, `req.params`, `req.query` and `req.headers` are typed by the infered zod validations from the validators
+-   The `res` object is the default Express response object
+-   The `context` object is the merged Context you passed along the middlewares
+
+### Context
+
+As with middlewares, you can access the merged context of all previous middlewares (= all middlewares) through the `context` object.
+
+### Return Values
+
+You can use `res` to send responses directly to the client without a transformer.
+
+However, it is recommended to return values instead. Those values are then passed to the [Transformer](#transformer) instead of being sent to the client directly.
+
+```ts
+new Handler()
+    .middleware(() => {
+        return {
+            user: {
+                uuid: '...',
+            },
+        }
+    })
+    .resolve((req, res, context) => {
+        const { user } = context
+
+        const subscription = await UserService.getUserSubscription(user.uuid)
+
+        // Just pass the data to the transformer instead of using res.send.
+        return subscription
+    })
+    .transform((data) => {
+        // data has the type of "subscription"
+        return {
+            userSubscriptionUuid: data.uuid,
+        }
+    })
+```
+
+## Transformer
+
+Transformers can be used to create sanitized data transfer objects based on the resolved data. This enables your resolver to just handle the business logic, independent of what single values should or should not be returned to the client.
+
+For example, the resolver might get a user object from the database for a given query. Of course you don't want to return the user's password to the client. To keep things clean, just pass the user object from the resolver (which shouldn't have to care about sanitizing values) to the transformer, which then takes the given object and only returns values that are appropriate to be returned.
+
+Example
+
+```ts
+new Handler()
+    .validate('params', {
+        uuid: z.string().uuid(),
+    })
+    .resolve(async (req) => {
+        const { uuid } = req.params
+
+        // This object contains confidential information, like a password
+        const user = await UserService.getUser(uuid)
+
+        return user
+    })
+    .transform((data) => {
+        return {
+            uuid: data.uuid,
+            email: data.email,
+            // leave out the password, since we don't want to send it to the client
+        }
+    })
+```
+
+You may return any value. If you choose to return an object or array, they are send with `res.json()`. All other return values are send with `res.send()`.
+
+If you want to use a different status code, set headers, cookie, etc. you can use e.g. `res.status(201)` before the return statement. We'll use this `res` object for sending the response internally
+
+## Type-sharing across codebases
 
 Response types can be inferred and be shared with other parts of the codebase, e.g. the frontend.
 
@@ -271,7 +462,7 @@ The handler chain exposes a custom type called `tranformedData`. It's the inferr
 
 You can use this best while being in a Monorepo to be able to share the types most easily.
 
-### Usage Example
+### Example
 
 **Backend**
 

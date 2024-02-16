@@ -321,6 +321,9 @@ export class Handler<
                         context = { ...context, ...returnedContextValue }
                     }
 
+                    // If a middleware has already sent a response, don't run the next middleware
+                    if (res.headersSent) return
+
                     await runNextChainItem()
                 } catch (err) {
                     if (err instanceof ValidationError) {

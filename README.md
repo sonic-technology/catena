@@ -46,6 +46,7 @@ npm i -D @types/express
         -   [Resolver](#resolver)
         -   [Transformer](#transformer)
     -   [Type-sharing across codebases](#type-sharing-across-codebases)
+    -   [File-based Routing]()
 
 # Examples
 
@@ -75,7 +76,7 @@ app.get(
 
 ## Validating requests
 
-There are so many occuasions where you want to validate parts of the incoming data. Here's how Catena does it.
+There are many occasions where you want to validate parts of the incoming data. Here's how Catena does it.
 
 ```ts
 // ...
@@ -513,4 +514,35 @@ import type { UserResponseData } from 'backend/handler'
  */
 
 const myRequest: UserResponseData = await fetch('/user').then((res) => res.json())
+```
+
+## File-based Routing
+
+We found [express-file-routing](https://github.com/matthiaaas/express-file-routing) to be a great addition to projects that use Catena, if you like file-based routing.
+
+An example of Catena + file-based routing:
+
+```ts
+// /users/:uuid
+export const POST = new Handler()
+    .validate('params', {
+        uuid: z.string().uuid(),
+    })
+    .validate('body', {
+        email: z.string().email().optional(),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
+    })
+    .resolve((req) => {
+        const updatedUser = new UserService.updateUser(req.params.uuid)
+
+        return updatedUser
+    })
+    .transform((user) => {
+        return {
+            uuid: user.uuid,
+            email: user.email,
+            name: user.firstName + ' ' + user.lastName,
+        }
+    })
 ```

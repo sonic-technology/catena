@@ -8,3 +8,5 @@ coverage/
 .vscode/
 .github/
 docs/
+src/
+examples/

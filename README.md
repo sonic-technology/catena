@@ -523,7 +523,8 @@ We found [express-file-routing](https://github.com/matthiaaas/express-file-routi
 An example of Catena + file-based routing:
 
 ```ts
-// /users/:uuid
+// /users/[uuid].ts
+
 export const POST = new Handler()
     .validate('params', {
         uuid: z.string().uuid(),

@@ -70,10 +70,7 @@ export class Handler<
     /**
      * Set this to the type of the data that will be returned by the transformer function.
      */
-    GlobalOutputData extends {
-        data: Record<string, unknown> | string | null
-        meta: Record<string, unknown> | null
-    },
+    GlobalOutputData extends {},
     RequestType = ExpressDefaultRequest,
     ReqBody = any,
     ReqQuery = any,

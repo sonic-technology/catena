@@ -46,7 +46,7 @@ npm i -D @types/express
         -   [Resolver](#resolver)
         -   [Transformer](#transformer)
     -   [Type-sharing across codebases](#type-sharing-across-codebases)
-    -   [File-based Routing]()
+    -   [File-based Routing](#file-based-routing)
 
 # Examples
 

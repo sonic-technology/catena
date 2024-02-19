@@ -2,7 +2,7 @@
   <br/><br/>
   <picture>
     <source height="100" media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo-dark.svg">
-    <img height="100" alt="Catena" src="./docs/assets/logo-light.svg">
+    <img height="100" alt="Catena" src="https://raw.githubusercontent.com/sonic-technology/catena/main/docs/assets/logo-light.svg">
   </picture>
 </p>
 
@@ -49,8 +49,6 @@ npm i -D @types/express
     -   [File-based Routing](#file-based-routing)
 
 # Examples
-
-Short examples of how to use Catena. Find more in-depth examples [here](/examples/)
 
 ## A simple handler
 

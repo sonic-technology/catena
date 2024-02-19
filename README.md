@@ -2,7 +2,7 @@
   <br/><br/>
   <picture>
     <source height="100" media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo-dark.svg">
-    <img height="100" alt="Catena" src="https://raw.githubusercontent.com/sonic-technology/catena/main/docs/assets/logo-light.svg">
+    <img height="100" alt="Catena" src="./docs/assets/logo-light.svg">
   </picture>
 </p>
 

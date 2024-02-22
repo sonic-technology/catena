@@ -62,7 +62,26 @@ class ValidationError extends Error {
     }
 }
 
-export type HandlerReturnType<TransformedData> = express.RequestHandler & {
+export type HandlerReturnType<
+    TransformedData,
+    ReqBody,
+    ReqQuery,
+    ReqHeaders,
+    ReqParams,
+    ResolvedData
+> = express.RequestHandler & {
+    types: {
+        response: TransformedData
+        request: {
+            body: ReqBody
+            query: ReqQuery
+            headers: ReqHeaders
+            params: ReqParams
+        }
+    }
+    /**
+     *  @deprecated Use response instead
+     * */
     transformedData: TransformedData
 }
 
@@ -256,7 +275,14 @@ export class Handler<
         return {} as GlobalOutputData
     }
 
-    express(): HandlerReturnType<GlobalOutputData> {
+    express(): HandlerReturnType<
+        GlobalOutputData,
+        ReqBody,
+        ReqQuery,
+        ReqHeaders,
+        ReqParams,
+        ResolvedData
+    > {
         const runner = async (
             req: CustomRequest<RequestType, ReqBody, ReqQuery, ReqHeaders, ReqParams>,
             res: Response,
@@ -345,6 +371,13 @@ export class Handler<
             await runNextChainItem()
         }
 
-        return runner as unknown as HandlerReturnType<GlobalOutputData>
+        return runner as unknown as HandlerReturnType<
+            GlobalOutputData,
+            ReqBody,
+            ReqQuery,
+            ReqHeaders,
+            ReqParams,
+            ResolvedData
+        >
     }
 }

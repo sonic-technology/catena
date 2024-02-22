@@ -455,11 +455,13 @@ If you want to use a different status code, set headers, cookie, etc. you can us
 
 ## Type-sharing across codebases
 
-Response types can be inferred and be shared with other parts of the codebase, e.g. the frontend.
+Request and response types of API handlers can be inferred and exported. You can use this to share your types e.g. with the frontend, like tRPC does.
 
-The handler chain exposes a custom type called `tranformedData`. It's the inferred type of the return value of the [transformer](#transformer) and thus the type of the data that is used as response data.
+Each handler exposes a `types` interface that contains `request` and `response` types.
 
-You can use this best while being in a Monorepo to be able to share the types most easily.
+The request type contains the expected types for `body`, `query`, `params` and `headers`.
+
+The `response` type represents the type of the value that is returned by the transformer.
 
 ### Example
 
@@ -467,7 +469,9 @@ You can use this best while being in a Monorepo to be able to share the types mo
 
 ```ts backend/handler.ts
 const myRequestHandler = new Handler()
-    .validate(...)
+    .validate("body", {
+        email: z.string().email()
+    })
     .resolve(...)
     .transform((data) => {
         return {
@@ -481,16 +485,8 @@ const myRequestHandler = new Handler()
 
 app.get("/user", myRequestHandler);
 
-/**
- * {
- *  data: {
- *    uuid: string;
- *    email: string;
- *    age: number;
- *  }
- * }
-*/
-export type UserResponseData = typeof myRequestHandler.tranformedData;
+
+export type GetUserTypes = typeof myRequestHandler.types;
 
 ```
 
@@ -498,20 +494,32 @@ export type UserResponseData = typeof myRequestHandler.tranformedData;
 
 ```ts frontend/requests.ts
 // It's important to only import using `import type`. This way, no business logic will be leaked to the frontend but just the type
-import type { UserResponseData } from 'backend/handler'
+import type { GetUserTypes } from 'backend/handler'
 
 /**
- * Type accessible as
+ * Body type inferred as
  * {
+ *   email: string
+ * }
+ */
+
+const body: GetUserTypes['request']['body'] = {
+    email: 'test@test.com',
+}
+
+const myRequestResponse = await fetch('/user', {
+    body: JSON.stringify(body),
+})
+
+/**
+ * Type inferred as
  *  data: {
  *    uuid: string;
  *    email: string;
  *    age: number;
  *  }
- * }
  */
-
-const myRequest: UserResponseData = await fetch('/user').then((res) => res.json())
+const responseData: GetUserTypes['request'] = await myRequestResponse.json()
 ```
 
 ## File-based Routing

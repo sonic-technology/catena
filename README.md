@@ -513,13 +513,14 @@ const myRequestResponse = await fetch('/user', {
 
 /**
  * Type inferred as
+ * {
  *  data: {
  *    uuid: string;
  *    email: string;
  *    age: number;
  *  }
  */
-const responseData: GetUserTypes['request'] = await myRequestResponse.json()
+const responseData: GetUserTypes['response'] = await myRequestResponse.json()
 ```
 
 ## File-based Routing

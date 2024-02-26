@@ -21,6 +21,15 @@
 Catena is an lightweight library for building end-to-end type-safe APIs on top of Express. It's inspired by tRPC but unlike tRPC, you can just plug it into your existing Express codebase.
 The main goal is to have a unified chain of useful steps to safely handle requests with a great DX and minimal overhead.
 
+<figure>
+<img src="./docs/assets/demo.gif" alt="Demo" />
+<figcaption>
+    <p align="center">
+    A demo of type sharing between route handler (backend) and frontend, inspired by tRPC. 
+    </p>
+</figcaption>
+</figure>
+
 # Installation
 
 1. Install Catena and its peer depencencies

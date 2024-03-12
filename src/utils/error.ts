@@ -137,7 +137,7 @@ export class HTTPError extends Error {
 export type ErrorReturnType = {
     errors: {
         message: string
-        path?: string[]
+        path?: (string | number)[]
     }[]
     location?: 'query' | 'params' | 'body' | 'headers'
     type: string

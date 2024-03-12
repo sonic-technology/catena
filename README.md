@@ -32,13 +32,13 @@ The main goal is to have a unified chain of useful steps to safely handle reques
 
 # Installation
 
-1. Install Catena and its peer depencencies
+1. Install Catena and its peer dependencies
 
 ```
 npm i @sonic-tech/catena zod express
 ```
 
-2. Also make sure that you have Express' types installed
+2. Also make sure that you have Express' types installed, if you want to leverage the full type-safeness.
 
 ```
 npm i -D @types/express
@@ -347,6 +347,7 @@ new Handler()
 
         // ...
     })
+    .express()
 ```
 
 A middleware does not need to return anything. If it returns void, the context objects stays as is.
@@ -377,6 +378,7 @@ new Handler()
     .middleware(MySecondMiddleware)
     .resolve(...)
     .transform(...)
+    .express()
 ```
 
 ## Resolver
@@ -426,6 +428,7 @@ new Handler()
             userSubscriptionUuid: data.uuid,
         }
     })
+    .express()
 ```
 
 ## Transformer
@@ -456,6 +459,7 @@ new Handler()
             // leave out the password, since we don't want to send it to the client
         }
     })
+    .express()
 ```
 
 You may return any value. If you choose to return an object or array, they are send with `res.json()`. All other return values are send with `res.send()`.
@@ -491,6 +495,7 @@ const myRequestHandler = new Handler()
             }
         }
     })
+    .express()
 
 app.get("/user", myRequestHandler);
 
@@ -562,4 +567,5 @@ export const POST = new Handler()
             name: user.firstName + ' ' + user.lastName,
         }
     })
+    .express()
 ```

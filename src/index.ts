@@ -44,7 +44,7 @@ type Middleware<
 class ValidationError extends Error {
     public statusCode: number
     public errors: ErrorReturnType['errors']
-    public location: string
+    public location: ErrorReturnType['location']
 
     constructor(zodError: ZodError, location: string) {
         super('Validation failed')
@@ -58,7 +58,7 @@ class ValidationError extends Error {
             path: el.path,
         }))
 
-        this.location = location
+        this.location = location as ErrorReturnType['location']
     }
 }
 

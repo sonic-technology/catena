@@ -139,6 +139,6 @@ export type ErrorReturnType = {
         message: string
         path?: string[]
     }[]
-    location?: string
+    location?: 'query' | 'params' | 'body' | 'headers'
     type: string
 }

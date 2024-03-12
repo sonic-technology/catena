@@ -10,7 +10,7 @@ import {
     ZodRawShape,
     ZodTypeAny,
 } from 'zod'
-import { HTTPError, HTTPStatus, HTTPStatusText } from './utils/error.js'
+import { ErrorReturnType, HTTPError, HTTPStatus, HTTPStatusText } from './utils/error.js'
 export { HTTPError, HTTPStatus, HTTPStatusText } from './utils/error.js'
 
 export type CustomRequest<
@@ -43,8 +43,8 @@ type Middleware<
 
 class ValidationError extends Error {
     public statusCode: number
-    public errors: { message: string; path: string[] }[]
-    public location: string
+    public errors: ErrorReturnType['errors']
+    public location: ErrorReturnType['location']
 
     constructor(zodError: ZodError, location: string) {
         super('Validation failed')
@@ -58,7 +58,7 @@ class ValidationError extends Error {
             path: el.path,
         }))
 
-        this.location = location
+        this.location = location as ErrorReturnType['location']
     }
 }
 
@@ -315,8 +315,15 @@ export class Handler<
                             return
                         }
                     } catch (err) {
-                        next(err)
-                        return
+                        if (err instanceof HTTPError) {
+                            return res.status(err.status).json({
+                                errors: [{ message: err.message }],
+                                type: HTTPStatusText[err.status as HTTPStatus],
+                            } satisfies ErrorReturnType)
+                        } else {
+                            next(err)
+                            return
+                        }
                     }
                 }
 
@@ -354,12 +361,12 @@ export class Handler<
                             errors: err.errors,
                             location: err.location,
                             type: HTTPStatusText[err.statusCode as HTTPStatus],
-                        })
+                        } satisfies ErrorReturnType)
                     } else if (err instanceof HTTPError) {
                         return res.status(err.status).json({
-                            errors: [err.message],
+                            errors: [{ message: err.message }],
                             type: HTTPStatusText[err.status as HTTPStatus],
-                        })
+                        } satisfies ErrorReturnType)
                     } else {
                         // call the native next express error handler
                         next(err)

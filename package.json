@@ -14,6 +14,10 @@
         "zod": "^3.22.4"
     },
     "keywords": [],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/sonic-technology/catena"
+    },
     "author": "Sonic Technologies",
     "license": "MIT",
     "devDependencies": {

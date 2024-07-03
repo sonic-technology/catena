@@ -1,6 +1,6 @@
 {
     "name": "@sonic-tech/catena",
-    "version": "0.1.4",
+    "version": "0.2.0",
     "type": "module",
     "description": "A lightweight and extensible library for building robust Node.js APIs, fast.",
     "main": "./dist/index.js",

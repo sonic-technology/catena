@@ -190,7 +190,7 @@ export class Handler<
         T extends 'params' ? z.infer<U> : ReqParams
     > {
         // validation logic here
-        const validationMiddleware = (
+        const validationMiddleware = async (
             req: CustomRequest<RequestType, ReqBody, ReqQuery, ReqHeaders, ReqParams>,
             res: Response,
             next: NextFunction
@@ -209,21 +209,23 @@ export class Handler<
 
                 // if it's already an zod object, just use it. Else, make it a zod object first
                 if (isZodObject(schema)) {
-                    schema.parse(value)
+                    // Overwrite the object inside request with the validated object to allow for transformations and refinements through zod
+                    // @ts-ignore
+                    req[type] = await schema.parseAsync(value)
                     next()
                 } else {
                     // Have to ignore the following because of an unresolved type issue. Still works as expected
                     // @ts-ignore
                     const combinedSchema: U = z.object<K>(schema)
 
-                    combinedSchema.parse(value)
-                    next()
+                    // Overwrite the object inside request with the validated object to allow for transformations and refinements through zod
+                    // @ts-ignore
+                    req[type] = await combinedSchema.parseAsync(value)
                 }
             } catch (err) {
                 if (err instanceof ZodError) {
                     throw new ValidationError(err, type)
                 }
-
                 throw err
             }
 
